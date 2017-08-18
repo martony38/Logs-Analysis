@@ -2,9 +2,9 @@
 
 Source code for my third project for the [Full Stack Web Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004) (FSWDN) program from Udacity.
 
-This project is a single file python 3 program that fetch and summarizes data from a large [PostgreSQL](https://www.postgresql.org) database called _news_.
+This project is a single file python 3 program that fetches and summarizes data from a large [PostgreSQL](https://www.postgresql.org) database called _news_.
 
-The database has 3 tables: [_authors_](#authors), [_articles_](#articles), and [_log_](#log) as well as 2 views created for this project: [_article_views_](#articles_views) and [_daily_requests_](#daily_requests).
+The database has 3 tables: [_authors_](#authors), [_articles_](#articles), and [_log_](#log) as well as 2 views created for this project: [_article_views_](#article_views) and [_daily_requests_](#daily_requests).
 
 ## Installation
 The instructions to download the database are part of the [FSWDN](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd004) program and can be found [here](https://classroom.udacity.com/nanodegrees/nd004/parts/8d3e23e1-9ab6-47eb-b4f3-d5dc7ef27bf0/modules/bc51d967-cb21-46f4-90ea-caf73439dc59/lessons/262a84d7-86dc-487d-98f9-648aa7ca5a0f/concepts/a9cf98c8-0325-4c68-b972-58d5957f1a91).
