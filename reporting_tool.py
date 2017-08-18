@@ -17,22 +17,19 @@ def most_popular_three_articles():
         "Political Scandal Ends In Political Scandal" — 553 views
     '''
 
-    # Connect to database and fetch articles
+    # Connect to database and fetch 3 most popular articles.
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute(
-        '''SELECT title, COUNT(log.path) AS views_num
-             FROM articles LEFT JOIN log
-               ON log.path LIKE '%' || articles.slug
-         GROUP BY title
+        '''SELECT *
+             FROM article_views
          ORDER BY views_num DESC
             LIMIT 3'''
     )
     articles = c.fetchall()
     db.close()
-    print(articles)
 
-    # Output result
+    # Output results.
     print('\nThe most popular three articles of all time are:\n')
     for article in articles:
         print('    "' + article[0] + '" - ' + str(article[1]) + ' views')
@@ -52,21 +49,17 @@ def most_popular_authors():
         Anonymous Contributor — 1023 views
     '''
 
-    # Connect to database and fetch articles using subqueries
+    # Connect to database and fetch author list ordered by views.
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute(
-        '''SELECT name, SUM(views_num::INT) as views_total -- Cast views_num as integer so that sum returns an integer
+        '''SELECT name, SUM(views_num) AS views_total
              FROM (SELECT name, views_num
                      FROM (SELECT name, title
                              FROM authors JOIN articles
                                ON articles.author = authors.id)
                        AS article_authors
-                     JOIN (SELECT title, COUNT(log.path) AS views_num
-                             FROM articles LEFT JOIN log
-                               ON log.path LIKE '%' || articles.slug
-                         GROUP BY title)
-                       AS article_views
+                     JOIN article_views
                        ON article_authors.title = article_views.title)
                AS author_views
          GROUP BY name
@@ -74,9 +67,8 @@ def most_popular_authors():
     )
     authors = c.fetchall()
     db.close()
-    print(authors)
 
-    # Output result
+    # Output results.
     print('\nThe most popular authors of all time are:\n')
     for author in authors:
         print('    ' + author[0] + ' - ' + str(author[1]) + ' views')
@@ -93,47 +85,41 @@ def days_with_most_errors():
         July 29, 2016 — 2.5% errors
     '''
 
-    # Connect to database and fetch articles using subqueries
+    # Connect to database and fetch percentage of bad requests per day.
     db = psycopg2.connect(database=DBNAME)
     c = db.cursor()
     c.execute(
-        '''SELECT to_char(bad_requests.day, 'FMMonth DD, YYYY'),
-                  to_char(100.0 * bad_requests_total / requests_total,
-                          'FM90.0') || '%'
-               AS bad_requests_percentage
-             FROM -- table with total number of requests for each day
-                  (SELECT time::timestamp::date AS day,
-                          COUNT(*) AS requests_total
-                     FROM log
-                 GROUP BY day)
-               AS requests
-             JOIN -- table with total number of request errors for each day
-                  (SELECT time::timestamp::date AS day,
-                          COUNT(*) AS bad_requests_total
-                     FROM log
-                    WHERE status != '200 OK'
-                 GROUP BY day)
+        '''SELECT bad_requests.day,
+                  100.0 * bad_req_num / (bad_req_num + good_req_num)
+                  AS bad_requests_percentage
+             FROM (SELECT day, requests_num AS good_req_num
+                     FROM daily_requests
+                    WHERE status = '200 OK')
+               AS good_requests
+             JOIN (SELECT day, requests_num AS bad_req_num
+                     FROM daily_requests
+                    WHERE status != '200 OK')
                AS bad_requests
-               ON requests.day = bad_requests.day
-            WHERE 100.0 * bad_requests_total / requests_total > 1
+               ON good_requests.day = bad_requests.day
+            WHERE 100.0 * bad_req_num / (bad_req_num + good_req_num) > 1
         '''
     )
-    days = c.fetchall()
+    error_days = c.fetchall()
     db.close()
-    print(days)
 
     # Output result
-    if days:
-        if len(days) > 1:
-            print('\nThe days on which more than 1% of requests lead to '
-                  'errors are:\n')
+    if error_days:
+        if len(error_days) > 1:
+            print('\nThe days on which more than 1% of requests led to '
+                  'errors were:\n')
         else:
-            print('\nThe day on which more than 1% of requests lead to errors '
-                  'is:\n')
-        for day in days:
-            print('    ' + day[0] + ' - ' + day[1] + ' errors')
+            print('\nThe day on which more than 1% of requests led to errors '
+                  'was:\n')
+        for error_day in error_days:
+            print('    ' + '{:%B %d, %Y}'.format(error_day[0]) + ' - ' +
+                  '{:.1f}'.format(error_day[1]) + '% errors')
     else:
-        print('\nThere are no days on which more than 1% of requests lead to '
+        print('\nThere were no days on which more than 1% of requests led to '
               'errors!')
     print('\n')
 
